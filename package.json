@@ -1,0 +1,15 @@
+{
+    "name": "yacht-dice-p2p",
+    "version": "1.0.0",
+    "description": "P2P multiplayer Yacht Dice game",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2"
+    },
+    "engines": {
+      "node": "16.x"
+    }
+  }
