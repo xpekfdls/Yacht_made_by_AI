@@ -1,46 +1,66 @@
-// server.js
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
-const path = require("path");
 
-// 정적 파일 경로 설정 (public 폴더)
 app.use(express.static("public"));
 
-// Socket.io 연결
-io.on("connection", (socket) => {
-  console.log("✅ New client connected:", socket.id);
+const rooms = {};
 
-  // 방 생성
+io.on("connection", (socket) => {
+  console.log("✅ Connected:", socket.id);
+
   socket.on("createRoom", () => {
     const roomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
     socket.join(roomCode);
+    rooms[roomCode] = {
+      players: [socket.id],
+      scores: {},
+      turnIndex: 0
+    };
     socket.emit("roomCreated", roomCode);
-    console.log(`Room created: ${roomCode}`);
   });
 
-  // 방 참가
   socket.on("joinRoom", (roomCode) => {
-    const room = io.sockets.adapter.rooms.get(roomCode);
-    if (room && room.size === 1) {
+    const room = rooms[roomCode];
+    if (room && room.players.length === 1) {
+      room.players.push(socket.id);
       socket.join(roomCode);
-      socket.emit("roomJoined", roomCode);
-      socket.to(roomCode).emit("opponentJoined");
-      console.log(`User ${socket.id} joined room: ${roomCode}`);
+      io.to(roomCode).emit("roomJoined", roomCode);
+      io.to(roomCode).emit("startGame", room.players);
     } else {
       socket.emit("joinFailed");
     }
   });
 
-  // 주사위 굴림 정보 공유
   socket.on("rollDice", ({ roomCode, dice }) => {
     socket.to(roomCode).emit("opponentRolled", dice);
+    io.to(roomCode).emit("updateDice", { id: socket.id, dice });
+  });
+
+  socket.on("submitScore", ({ roomCode, playerId, category, score }) => {
+    const room = rooms[roomCode];
+    if (!room.scores[playerId]) room.scores[playerId] = {};
+    room.scores[playerId][category] = score;
+
+    // 턴 전환
+    room.turnIndex = (room.turnIndex + 1) % room.players.length;
+    const nextPlayer = room.players[room.turnIndex];
+
+    io.to(roomCode).emit("scoreSubmitted", {
+      scores: room.scores,
+      nextPlayer
+    });
+
+    // 게임 종료 조건 체크
+    const gameOver = room.players.every(p => Object.keys(room.scores[p] || {}).length === 12);
+    if (gameOver) {
+      io.to(roomCode).emit("gameOver", room.scores);
+    }
   });
 });
 
-// 서버 실행
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-  console.log("🚀 Server listening on port", PORT);
+  console.log("🚀 Server running on port", PORT);
 });
