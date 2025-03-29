@@ -1,297 +1,38 @@
-/* 기본 스타일 */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
-  font-family: 'Arial', sans-serif;
-  line-height: 1.6;
-  color: #333;
-  background-color: #f5f5f5;
-}
-
-.container {
-  max-width: 800px;
-  margin: 0 auto;
+  font-family: sans-serif;
+  text-align: center;
+  background: #f2f2f2;
   padding: 20px;
 }
-
-h1, h2, h3 {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
 .hidden {
-  display: none !important;
+  display: none;
 }
-
-/* 버튼 스타일 */
-.btn {
+#dice span, #opponentDice span {
   display: inline-block;
-  padding: 10px 20px;
+  font-size: 24px;
+  padding: 10px;
   margin: 5px;
-  border: none;
+  border: 1px solid #333;
   border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
+  background: white;
 }
-
-.primary-btn {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.primary-btn:hover {
-  background-color: #45a049;
-}
-
-.secondary-btn {
-  background-color: #f1f1f1;
-  color: #333;
-}
-
-.secondary-btn:hover {
-  background-color: #ddd;
-}
-
-.button-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 20px 0;
-}
-
-/* 폼 스타일 */
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input[type="text"] {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-/* 메뉴 화면 */
-#menu-screen {
-  text-align: center;
-}
-
-/* 게임 화면 */
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.game-info {
-  flex: 1;
-}
-
-#room-info {
-  text-align: right;
-}
-
-/* 주사위 스타일 */
-.dice-container {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin: 20px 0;
-}
-
-.dice {
-  width: 60px;
-  height: 60px;
-  border: 2px solid #333;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.dice-face {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.dice.held {
-  background-color: #ffecb3;
-  border-color: #ffc107;
-  transform: translateY(-5px);
-}
-
-/* 게임 액션 버튼 */
-.game-actions {
-  text-align: center;
-  margin: 20px 0;
-}
-
-/* 점수판 스타일 */
-.scorecard-container {
-  margin: 20px 0;
-  overflow-x: auto;
-}
-
-.score-tabs {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.score-tab {
-  padding: 8px 16px;
-  background-color: #f1f1f1;
-  border: none;
-  border-bottom: 2px solid transparent;
+#scoreBoard button {
+  margin: 4px;
+  padding: 6px 10px;
   cursor: pointer;
 }
-
-.score-tab.active {
-  border-bottom: 2px solid #4CAF50;
-  font-weight: bold;
-}
-
-.scorecard {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-.scorecard th, .scorecard td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-.scorecard th {
-  background-color: #f5f5f5;
-}
-
-.scorecard tr:hover {
-  background-color: #f9f9f9;
-}
-
-.category {
-  cursor: pointer;
-}
-
-.category.selectable:hover {
-  background-color: #e8f5e9;
-}
-
-.category.selected {
-  background-color: #c8e6c9;
-}
-
-.category.disabled {
+button[disabled] {
+  background-color: #ccc;
   cursor: not-allowed;
-  color: #999;
 }
-
-.subtotal-row td, .bonus-row td, .total-row td {
-  font-weight: bold;
+#scoreTable {
+  margin-top: 20px;
+  border-collapse: collapse;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
 }
-
-/* 대기실 화면 */
-.room-info {
-  text-align: center;
-  background-color: #e8f5e9;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-}
-
-#room-code-display, #game-room-code {
-  font-weight: bold;
-  font-size: 1.2em;
-  color: #4CAF50;
-}
-
-.players-list {
-  margin: 20px 0;
-}
-
-#players-list {
-  list-style: none;
-}
-
-#players-list li {
-  padding: 10px;
-  background-color: #f9f9f9;
-  margin-bottom: 5px;
-  border-radius: 5px;
-}
-
-#waiting-message {
-  text-align: center;
-  font-style: italic;
-  color: #666;
-}
-
-/* 게임 결과 화면 */
-#game-result-screen {
-  text-align: center;
-}
-
-#winner-display {
-  font-size: 24px;
-  margin: 20px 0;
-  color: #4CAF50;
-}
-
-#final-scores {
-  margin: 20px 0;
-}
-
-/* 알림창 */
-#notification {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  z-index: 1000;
-  animation: fadeOut 3s forwards;
-}
-
-@keyframes fadeOut {
-  0% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* 반응형 스타일 */
-@media (max-width: 600px) {
-  .dice {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .dice-face {
-    font-size: 20px;
-  }
-  
-  .scorecard th, .scorecard td {
-    padding: 8px;
-    font-size: 14px;
-  }
+#scoreTable th, #scoreTable td {
+  border: 1px solid #999;
+  padding: 8px;
 }

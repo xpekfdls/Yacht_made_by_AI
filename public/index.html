@@ -1,220 +1,38 @@
+<!-- public/index.html -->
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yacht Dice Game</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Yacht Dice Game</h1>
-    
-    <!-- 초기 메뉴 화면 -->
-    <div id="menu-screen">
-      <h2>게임 모드 선택</h2>
-      <div class="button-container">
-        <button id="solo-mode-btn" class="btn primary-btn">혼자 플레이</button>
-        <button id="create-room-btn" class="btn primary-btn">방 만들기</button>
-        <button id="join-room-btn" class="btn primary-btn">방 참가하기</button>
-      </div>
-    </div>
-    
-    <!-- 방 생성 화면 -->
-    <div id="create-room-screen" class="hidden">
-      <h2>방 생성하기</h2>
-      <div class="form-group">
-        <label for="create-name">닉네임:</label>
-        <input type="text" id="create-name" placeholder="닉네임을 입력하세요">
-      </div>
-      
-      <div class="game-actions">
-        <button id="roll-dice-btn" class="btn primary-btn">주사위 굴리기</button>
-      </div>
-      
-      <!-- 점수판 영역 -->
-      <div class="scorecard-container">
-        <h3>점수표</h3>
-        <div id="pvp-score-tabs" class="score-tabs hidden">
-          <button class="score-tab active" data-player="player1">플레이어 1</button>
-          <button class="score-tab" data-player="player2">플레이어 2</button>
-        </div>
-        <table class="scorecard">
-          <thead>
-            <tr>
-              <th>카테고리</th>
-              <th>설명</th>
-              <th id="scorecard-player">점수</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- 상단 섹션 -->
-            <tr class="category" data-category="ones">
-              <td>Ones</td>
-              <td>1의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="twos">
-              <td>Twos</td>
-              <td>2의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="threes">
-              <td>Threes</td>
-              <td>3의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="fours">
-              <td>Fours</td>
-              <td>4의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="fives">
-              <td>Fives</td>
-              <td>5의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="sixes">
-              <td>Sixes</td>
-              <td>6의 합계</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="subtotal-row">
-              <td>상단 합계</td>
-              <td></td>
-              <td id="upper-score">0</td>
-            </tr>
-            <tr class="bonus-row">
-              <td>보너스</td>
-              <td>63점 이상 시 +35</td>
-              <td id="bonus-score">0</td>
-            </tr>
-            
-            <!-- 하단 섹션 -->
-            <tr class="category" data-category="choice">
-              <td>Choice</td>
-              <td>모든 주사위의 합</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="fourOfKind">
-              <td>Four of a Kind</td>
-              <td>같은 숫자 4개 이상</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="fullHouse">
-              <td>Full House</td>
-              <td>같은 숫자 3개 + 2개</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="smallStraight">
-              <td>Small Straight</td>
-              <td>연속 4개 (15점)</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="largeStraight">
-              <td>Large Straight</td>
-              <td>연속 5개 (30점)</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="category" data-category="yacht">
-              <td>Yacht</td>
-              <td>같은 숫자 5개 (50점)</td>
-              <td class="score-cell">-</td>
-            </tr>
-            <tr class="total-row">
-              <td>총점</td>
-              <td></td>
-              <td id="total-score">0</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- 게임 결과 화면 -->
-    <div id="game-result-screen" class="hidden">
-      <h2>게임 종료!</h2>
-      <div id="winner-display"></div>
-      <div id="final-scores"></div>
-      <button id="back-to-menu" class="btn primary-btn">메인 메뉴로</button>
-    </div>
-    
-    <!-- 알림창 -->
-    <div id="notification" class="hidden"></div>
+  <h1>🎲 Yacht Dice Game</h1>
+
+  <!-- 📌 메인 메뉴 -->
+  <div id="menu">
+    <button onclick="startSolo()">Play Solo</button>
+    <button onclick="showPvpMenu()">Play PVP</button>
   </div>
 
-  <!-- 스크립트 -->
+  <!-- 🔗 PVP 초대 코드 UI -->
+  <div id="pvpMenu" class="hidden">
+    <button onclick="createRoom()">Create Room</button>
+    <input id="roomCodeInput" placeholder="Enter Room Code" maxlength="6" />
+    <button onclick="joinRoom()">Join Room</button>
+    <p id="roomCodeDisplay"></p>
+  </div>
+
+  <!-- 🎮 게임 화면 -->
+  <div id="game" class="hidden">
+    <div id="dice"></div>
+    <button onclick="rollDice()">Roll</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- 📦 socket.io 및 클라이언트 스크립트 -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="socket-client.js"></script>
-  <script src="game.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>
-      <div class="button-container">
-        <button id="create-room-submit" class="btn primary-btn">방 만들기</button>
-        <button id="create-room-back" class="btn secondary-btn">뒤로가기</button>
-      </div>
-    </div>
-    
-    <!-- 방 참가 화면 -->
-    <div id="join-room-screen" class="hidden">
-      <h2>방 참가하기</h2>
-      <div class="form-group">
-        <label for="join-code">방 코드:</label>
-        <input type="text" id="join-code" placeholder="방 코드를 입력하세요">
-      </div>
-      <div class="form-group">
-        <label for="join-name">닉네임:</label>
-        <input type="text" id="join-name" placeholder="닉네임을 입력하세요">
-      </div>
-      <div class="button-container">
-        <button id="join-room-submit" class="btn primary-btn">참가하기</button>
-        <button id="join-room-back" class="btn secondary-btn">뒤로가기</button>
-      </div>
-    </div>
-    
-    <!-- 대기실 화면 -->
-    <div id="waiting-room-screen" class="hidden">
-      <h2>대기실</h2>
-      <div class="room-info">
-        <p>방 코드: <span id="room-code-display"></span></p>
-        <p>이 코드를 친구에게 공유하세요!</p>
-      </div>
-      <div class="players-list">
-        <h3>참가자</h3>
-        <ul id="players-list"></ul>
-      </div>
-      <p id="waiting-message">상대방이 들어오기를 기다리는 중...</p>
-    </div>
-    
-    <!-- 게임 화면 (Solo & PvP 공통) -->
-    <div id="game-screen" class="hidden">
-      <div class="game-header">
-        <div class="game-info">
-          <h2 id="game-mode-title">Yacht Dice Game</h2>
-          <p id="turn-info" class="hidden">현재 턴: <span id="current-player"></span></p>
-          <p id="roll-info">남은 굴림: <span id="rolls-left">3</span></p>
-        </div>
-        <div id="room-info" class="hidden">
-          <p>방 코드: <span id="game-room-code"></span></p>
-        </div>
-      </div>
-      
-      <!-- 주사위 영역 -->
-      <div class="dice-container">
-        <div class="dice" data-index="0">
-          <div class="dice-face">1</div>
-        </div>
-        <div class="dice" data-index="1">
-          <div class="dice-face">1</div>
-        </div>
-        <div class="dice" data-index="2">
-          <div class="dice-face">1</div>
-        </div>
-        <div class="dice" data-index="3">
-          <div class="dice-face">1</div>
-        </div>
-        <div class="dice" data-index="4">
-          <div class="dice-face">1</div>
-        </div>
-      </div>
-      
