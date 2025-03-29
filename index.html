@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yacht Dice - P2P Multiplayer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <style>
+
+        :root {
+            --primary: #3498db;
+            --secondary: #2980b9;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex: 1;
+        }
+
+        /* Lobby Styles */
+        .lobby {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .lobby h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .lobby-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            box-shadow: var(--box-shadow);
+        }
+
+        button:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        button.secondary:hover {
+            background-color: #d5dbdb;
+        }
+
+        .connection-status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+        }
+
+        .connected {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .disconnected {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .game-code {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 0.2rem;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            background-color: var(--light);
+            border-radius: var(--border-radius);
+        }
+
+        /* Game Board Styles */
+        .game-board {
+            display: none;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        .dice-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .dice-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem 0;
+        }
+
+        .dice {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .dice.held {
+            box-shadow: 0 0 10px var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .dice.held::after {
+            content: 'Held';
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.7rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .dice.inactive {
+            opacity: 0.6;
+            box-shadow: none;
+            transform: none;
+            transition: none;
+        }
+
+        .dice.inactive:hover {
+            transform: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        */
+
+        .dice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .roll-count {
+            text-align: center;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .score-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .scoreboard {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .scoreboard th, .scoreboard td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .scoreboard th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .scoreboard tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .scoreboard tr:hover {
+            background-color: #e6f7ff;
+        }
+
+        .score-category {
+            position: relative;
+            cursor: help;
+        }
+
+        .score-category:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background-color: var(--dark);
+            color: white;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            z-index: 10;
+            width: 200px;
+            font-size: 0.9rem;
+        }
+
+        .player-turn {
+            background-color: #e6f7ff;
+            font-weight: bold;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: var(--light);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .turn-indicator {
+            padding: 0.5rem 1rem;
+            background-color: var(--warning);
+            color: white;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+        }
+
+        /* Chat Styles */
+        .chat-container {
+            margin-top: 1.5rem;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1rem;
+        }
+
+        .chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: #f9f9f9;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: 1fr;
+            }
+
+            .dice {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .rolling {
+            animation: roll 0.5s ease-out;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .modal h2 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Dice Faces */
+        .dice-face {
+            display: grid;
+            grid-template-areas:
+                "a . c"
+                "e g f"
+                "d . b";
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--dark);
+            border-radius: 50%;
+            align-self: center;
+            justify-self: center;
+        }
+
+        .dot:nth-child(1) { grid-area: a; }
+        .dot:nth-child(2) { grid-area: b; }
+        .dot:nth-child(3) { grid-area: c; }
+        .dot:nth-child(4) { grid-area: d; }
+        .dot:nth-child(5) { grid-area: e; }
+        .dot:nth-child(6) { grid-area: f; }
+        .dot:nth-child(odd):last-child { grid-area: g; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Yacht Dice</h1>
+        <p>The classic 1938 dice game - P2P Multiplayer Edition</p>
+    </header>
+
+    <div class="container">
+        <div class="lobby" id="lobby">
+            <h2>Start a New Game</h2>
+            <p>Play the classic Yacht Dice game with a friend over peer-to-peer connection</p>
+            
+            <div class="lobby-buttons">
+                <button id="create-game">Create New Game</button>
+                <button id="join-game" class="secondary">Join Existing Game</button>
+            </div>
+
+            <div id="connection-area" style="display: none;">
+                <div id="connection-status" class="connection-status disconnected">Disconnected</div>
+                <div id="game-code-display" class="game-code" style="display: none;"></div>
+                <div id="join-section" style="display: none; margin-top: 1rem;">
+                    <input type="text" id="game-code-input" placeholder="Enter game code" style="padding: 0.5rem; width: 200px; text-align: center;">
+                    <button id="connect-button" style="margin-top: 0.5rem;">Connect</button>
+                </div>
+                <div id="waiting-message" style="display: none; margin-top: 1rem;">
+                    <p>Waiting for another player to join...</p>
+                    <p>Share this game code with your friend:</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board" id="game-board">
+            <div class="dice-section">
+                <div class="game-info">
+                    <div class="player-name" id="player-name-display">Player</div>
+                    <div class="turn-indicator" id="turn-indicator">Your Turn</div>
+                </div>
+                
+                <div class="dice-container" id="dice-container">
+                    <!-- Dice will be added here by JavaScript -->
+                </div>
+
+                <div class="roll-count" id="roll-count">Rolls: 0/3</div>
+                
+                <div class="dice-controls">
+                    <button id="roll-button">Roll Dice</button>
+                    <button id="score-button" disabled>Select Score Category</button>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-input" placeholder="Type a message...">
+                        <button id="send-button">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="score-section">
+                <h2>Scoreboard</h2>
+                <table class="scoreboard" id="scoreboard">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th id="player1-header">Player 1</th>
+                            <th id="player2-header">Player 2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Score categories will be added here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="category-modal">
+        <div class="modal-content">
+            <h2>Select a Category</h2>
+            <p>Choose where to score your current dice:</p>
+            <div id="category-options">
+                <!-- Category options will be added here by JavaScript -->
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-category">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="game-over-modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p id="game-result-message"></p>
+            <div class="modal-buttons">
+                <button id="new-game-button">New Game</button>
+                <button id="quit-game-button" class="secondary">Quit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            playerId: null,
+            playerName: 'Player ' + Math.floor(Math.random() * 1000),
+            peer: null,
+            conn: null,
+            currentDice: [1, 1, 1, 1, 1],
+            heldDice: [false, false, false, false, false],
+            rollsLeft: 3,
+            currentPlayer: null,
+            scores: {
+                player1: {},
+                player2: {}
+            },
+            usedCategories: {
+                player1: [],
+                player2: []
+            },
+            gameCode: null,
+            isHost: false,
+            gameStarted: false
+        };
+
+        // Scoring categories
+        const categories = [
+            { name: 'Ones', description: 'Sum of all ones', calculate: dice => sumDiceOfValue(dice, 1) },
+            { name: 'Twos', description: 'Sum of all twos', calculate: dice => sumDiceOfValue(dice, 2) },
+            { name: 'Threes', description: 'Sum of all threes', calculate: dice => sumDiceOfValue(dice, 3) },
+            { name: 'Fours', description: 'Sum of all fours', calculate: dice => sumDiceOfValue(dice, 4) },
+            { name: 'Fives', description: 'Sum of all fives', calculate: dice => sumDiceOfValue(dice, 5) },
+            { name: 'Sixes', description: 'Sum of all sixes', calculate: dice => sumDiceOfValue(dice, 6) },
+            { name: 'Full House', description: 'Three of one kind and two of another (sum of all dice)', calculate: checkFullHouse },
+            { name: 'Four of a Kind', description: 'Four dice showing the same number (sum of those four dice)', calculate: checkFourOfAKind },
+            { name: 'Little Straight', description: '1-2-3-4-5 (30 points)', calculate: checkLittleStraight },
+            { name: 'Big Straight', description: '2-3-4-5-6 (30 points)', calculate: checkBigStraight },
+            { name: 'Choice', description: 'Sum of all dice', calculate: dice => dice.reduce((a, b) => a + b, 0) },
+            { name: 'Yacht', description: 'All five dice showing the same number (50 points)', calculate: checkYacht }
+        ];
+
+        // DOM elements
+        const lobbyElement = document.getElementById('lobby');
+        const gameBoardElement = document.getElementById('game-board');
+        const createGameButton = document.getElementById('create-game');
+        const joinGameButton = document.getElementById('join-game');
+        const connectionArea = document.getElementById('connection-area');
+        const connectionStatus = document.getElementById('connection-status');
+        const gameCodeDisplay = document.getElementById('game-code-display');
+        const joinSection = document.getElementById('join-section');
+        const gameCodeInput = document.getElementById('game-code-input');
+        const connectButton = document.getElementById('connect-button');
+        const waitingMessage = document.getElementById('waiting-message');
+        const diceContainer = document.getElementById('dice-container');
+        const rollButton = document.getElementById('roll-button');
+        const scoreButton = document.getElementById('score-button');
+        const rollCountElement = document.getElementById('roll-count');
+        const scoreboardElement = document.getElementById('scoreboard');
+        const player1Header = document.getElementById('player1-header');
+        const player2Header = document.getElementById('player2-header');
+        const categoryModal = document.getElementById('category-modal');
+        const categoryOptions = document.getElementById('category-options');
+        const cancelCategoryButton = document.getElementById('cancel-category');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const gameResultMessage = document.getElementById('game-result-message');
+        const newGameButton = document.getElementById('new-game-button');
+        const quitGameButton = document.getElementById('quit-game-button');
+        const playerNameDisplay = document.getElementById('player-name-display');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Initialize the game
+        function initGame() {
+            // Set up event listeners
+            createGameButton.addEventListener('click', createGame);
+            joinGameButton.addEventListener('click', showJoinSection);
+            connectButton.addEventListener('click', joinGame);
+            rollButton.addEventListener('click', rollDice);
+            scoreButton.addEventListener('click', showCategorySelection);
+            cancelCategoryButton.addEventListener('click', hideCategorySelection);
+            newGameButton.addEventListener('click', resetGame);
+            quitGameButton.addEventListener('click', quitGame);
+            sendButton.addEventListener('click', sendChatMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+
+            // Initialize dice display
+            renderDice();
+            renderScoreboard();
+            playerNameDisplay.textContent = gameState.playerName;
+        }
+
+        // WebRTC functions
+        function createGame() {
+            gameState.isHost = true;
+            gameState.playerId = 'player1';
+            
+            // 랜덤 게임 코드 생성
+            gameState.gameCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            gameState.peer = new Peer(gameState.gameCode, {
+                debug: 3,
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            gameState.peer.on('open', id => {
+            console.log('Game created with ID/code: ' + id);
+            connectionStatus.textContent = 'Peer 연결됨';
+            
+            // 호스트는 상대방의 연결을 기다립니다
+            gameState.peer.on('connection', conn => {
+                handlePeerConnection(conn);
+            });
+            
+            // 게임 코드와 대기 메시지 표시
+            connectionArea.style.display = 'block';
+            gameCodeDisplay.textContent = gameState.gameCode;
+            gameCodeDisplay.style.display = 'block';
+            waitingMessage.style.display = 'block';
+            joinSection.style.display = 'none';
+    });
+    
+    gameState.peer.on('error', err => {
+        console.error('Peer error:', err);
+        if (err.type === 'unavailable-id') {
+            // ID가 이미 사용 중인 경우 새 게임 코드 생성
+            alert('게임 코드가 이미 사용 중입니다. 다시 시도해주세요.');
+            quitGame();
+        }
+    });
+    
+    createGameButton.disabled = true;
+    joinGameButton.disabled = true;
+        }
+
+        function showJoinSection() {
+            connectionArea.style.display = 'block';
+            joinSection.style.display = 'block';
+            gameCodeDisplay.style.display = 'none';
+            waitingMessage.style.display = 'none';
+            
+            createGameButton.disabled = true;
+            joinGameButton.disabled = true;
+        }
+
+        function joinGame() {
+            const code = gameCodeInput.value.trim().toUpperCase();
+            if (!code || code.length !== 4) {
+                alert('유효한 4자리 게임 코드를 입력해주세요');
+                return;
+            }
+            
+            gameState.gameCode = code;
+            gameState.isHost = false;
+            gameState.playerId = 'player2';
+            
+            // PeerJS 초기화 (게스트는 ID가 중요하지 않음)
+            gameState.peer = new Peer(null, {
+                debug: 3,
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                }
+            });
+    
+    gameState.peer.on('open', id => {
+        console.log('My peer ID is: ' + id);
+        connectionStatus.textContent = 'Peer 연결됨, 호스트에 연결 중...';
+        
+        // 게임 코드(호스트의 피어 ID)로 연결 시도
+        connectToPeer();
+    });
+    
+    gameState.peer.on('error', err => {
+        console.error('Peer error:', err);
+        connectionStatus.textContent = '연결 오류: ' + err.type;
+        connectionStatus.classList.remove('connected');
+        connectionStatus.classList.add('disconnected');
+        
+        if (err.type === 'peer-unavailable') {
+            alert('게임 코드 "' + gameState.gameCode + '"를 가진 호스트를 찾을 수 없습니다. 코드를 확인하고 다시 시도하세요.');
+            connectButton.disabled = false;
+        }
+    });
+    
+    connectButton.disabled = true;
+}
+
+        function initializePeer() {
+            // 실제 PeerJS 연결 초기화
+            gameState.peer = new Peer();
+            
+            gameState.peer.on('open', id => {
+                console.log('My peer ID is: ' + id);
+                connectionStatus.textContent = 'Peer 연결됨';
+                
+                if (gameState.isHost) {
+                    // 호스트는 상대방의 연결을 기다립니다
+                    gameState.peer.on('connection', conn => {
+                        handlePeerConnection(conn);
+                    });
+                } else {
+                    // 참여자는 호스트에 연결합니다
+                    connectToPeer();
+                }
+            });
+            
+            gameState.peer.on('error', err => {
+                console.error('Peer error:', err);
+                connectionStatus.textContent = '연결 오류: ' + err.type;
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+            });
+        }
+
+        function connectToPeer() {
+            console.log('연결 시도 중: ' + gameState.gameCode);
+            
+            try {
+                const conn = gameState.peer.connect(gameState.gameCode, {
+                    reliable: true
+                });
+                
+                // 연결이 열리면 처리
+                conn.on('open', () => {
+                    handlePeerConnection(conn);
+                });
+                
+                // 연결 오류 처리
+                conn.on('error', err => {
+                    console.error('Connection error:', err);
+                });
+            } catch (error) {
+                console.error('Failed to connect:', error);
+            }
+        }
+
+        function handlePeerConnection(conn) {
+            gameState.conn = conn;
+            
+            conn.on('open', () => {
+                console.log('Connected to peer');
+                connectionStatus.textContent = '상대방과 연결됨';
+                connectionStatus.classList.remove('disconnected');
+                connectionStatus.classList.add('connected');
+                
+                if (gameState.isHost) {
+                    // 게임 시작
+                    startGame();
+                }
+            });
+            
+            conn.on('data', data => {
+                receiveGameData(data);
+            });
+            
+            conn.on('close', () => {
+                console.log('Connection closed');
+                connectionStatus.textContent = '연결 종료됨';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+            });
+            
+            conn.on('error', err => {
+                console.error('Connection error:', err);
+                connectionStatus.textContent = '연결 오류';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+            });
+        }
+
+        function simulatePeerConnection() {
+            // In a real app, this would be WebRTC connection setup
+            setTimeout(() => {
+                // Start the game
+                startGame();
+            }, 1500);
+        }
+
+        function sendGameData(data) {
+            // 실제로 WebRTC를 통해 데이터 전송
+            if (gameState.conn && gameState.conn.open) {
+                gameState.conn.send(data);
+                
+                // 로컬에서도 처리 (디버깅 용)
+                console.log('Sending data:', data);
+            } else {
+                console.warn('Cannot send data - no open connection');
+            }
+        }
+
+        function receiveGameData(data) {
+            console.log('Received game data:', data);
+
+            
+            if (!data || typeof data !== 'object' || !data.type) {
+                console.error('Invalid game data format:', data);
+                return;
+            }
+
+            console.log(`Processing message of type: ${data.type}`);
+            
+            switch (data.type) {
+                case 'game_start':
+                    console.log('About to call handleGameStart with:', data);
+                    checkDomElements(); // DOM 요소 체크
+                    handleGameStart(data);
+                    console.log('After handleGameStart call');
+                    break;
+                case 'dice_roll':
+                    handleDiceRoll(data);
+                    break;
+                case 'dice_hold':
+                    handleDiceHold(data);
+                    break;
+                case 'score_selected':
+                    handleScoreSelected(data);
+                    break;
+                case 'chat_message':
+                    handleChatMessage(data);
+                    break;
+                case 'game_over':
+                    handleGameOver(data);
+                    break;
+            }
+        }
+
+        function checkDomElements() {
+            const elements = {
+                lobbyElement: lobbyElement,
+                gameBoardElement: gameBoardElement,
+                player1Header: player1Header,
+                player2Header: player2Header,
+                playerNameDisplay: playerNameDisplay,
+                diceContainer: diceContainer,
+                rollButton: rollButton,
+                scoreButton: scoreButton,
+                connectionStatus: connectionStatus
+            };
+            
+            console.log('===== DOM Elements Check =====');
+            for (const [name, element] of Object.entries(elements)) {
+                console.log(`${name}: ${element ? 'exists' : 'MISSING!'}`);
+            }
+            console.log('==============================');
+        }
+
+        // Game functions
+        function startGame() {
+            gameState.gameStarted = true;
+            
+            // 점수 초기화
+            categories.forEach(category => {
+                gameState.scores.player1[category.name] = null;
+                gameState.scores.player2[category.name] = null;
+            });
+            
+            // 호스트부터 시작
+            gameState.currentPlayer = 'player1';
+            
+            // 로비 숨기고 게임 보드 표시
+            lobbyElement.style.display = 'none';
+            gameBoardElement.style.display = 'grid';
+            
+            // UI 업데이트
+            updatePlayerHeaders();
+            updateControlsBasedOnTurn(); // 컨트롤 상태 업데이트
+            
+            // 게임 시작 메시지 전송 (호스트인 경우)
+            if (gameState.isHost) {
+                sendGameData({
+                    type: 'game_start',
+                    player1Name: gameState.playerName,
+                    startingPlayer: 'player1'
+                });
+            }
+        }
+
+        function handleGameStart(data) {
+            try {
+                console.log('Inside handleGameStart with data:', data);
+                
+                // 게스트 측 로직
+                if (!gameState.isHost) {
+                    console.log('Processing as guest...');
+                    
+                    // 1. 점수 초기화 - 먼저 수행
+                    console.log('Initializing scores');
+                    try {
+                        categories.forEach(category => {
+                            if (!gameState.scores.player1) gameState.scores.player1 = {};
+                            if (!gameState.scores.player2) gameState.scores.player2 = {};
+                            gameState.scores.player1[category.name] = null;
+                            gameState.scores.player2[category.name] = null;
+                        });
+                        console.log('Scores initialized successfully');
+                    } catch (e) {
+                        console.error('Error initializing scores:', e);
+                    }
+                    
+                    // 2. 현재 플레이어 설정
+                    try {
+                        gameState.currentPlayer = data.startingPlayer;
+                        console.log('Current player set to:', gameState.currentPlayer);
+                    } catch (e) {
+                        console.error('Error setting current player:', e);
+                    }
+                    
+                    // 3. 이름 설정
+                    try {
+                        if (data.player1Name) {
+                            console.log('Setting player names. Host name:', data.player1Name);
+                            if (player1Header) player1Header.textContent = data.player1Name;
+                            
+                            if (data.player1Name === gameState.playerName) {
+                                gameState.playerName += ' (2)';
+                            }
+                            
+                            if (player2Header) player2Header.textContent = gameState.playerName;
+                            if (playerNameDisplay) playerNameDisplay.textContent = gameState.playerName;
+                            console.log('Player names set successfully');
+                        }
+                    } catch (e) {
+                        console.error('Error setting player names:', e);
+                    }
+                    
+                    // 4. UI 변경
+                    try {
+                        console.log('Updating UI elements');
+                        if (lobbyElement) lobbyElement.style.display = 'none';
+                        if (gameBoardElement) gameBoardElement.style.display = 'grid';
+                        console.log('UI updated successfully');
+                    } catch (e) {
+                        console.error('Error updating UI:', e);
+                    }
+                    
+                    // 5. 게임 상태 설정
+                    try {
+                        gameState.gameStarted = true;
+                        console.log('Game started flag set');
+                    } catch (e) {
+                        console.error('Error setting game started flag:', e);
+                    }
+                    
+                    // 6. UI 업데이트 함수 호출
+                    try {
+                        console.log('Updating scoreboard and turn indicator');
+                        if (typeof renderScoreboard === 'function') renderScoreboard();
+                        if (typeof updateTurnIndicator === 'function') updateTurnIndicator();
+                        console.log('UI updates completed');
+                    } catch (e) {
+                        console.error('Error updating scoreboard/turn indicator:', e);
+                    }
+                    updateControlsBasedOnTurn();
+
+                    console.log('Game start process completed for guest');
+                } else {
+                    console.log('Ignoring game_start message as host');
+                }
+                
+                console.log('handleGameStart completed successfully');
+            } catch (e) {
+                console.error('Error in handleGameStart:', e);
+            }
+        }
+        function rollDice() {
+            // 자신의 턴이 아니거나 주사위를 모두 사용한 경우 무시
+            if (gameState.currentPlayer !== gameState.playerId || gameState.rollsLeft <= 0) {
+                return;
+            }
+            
+            // 주사위 굴리기
+            for (let i = 0; i < 5; i++) {
+                if (!gameState.heldDice[i]) {
+                    gameState.currentDice[i] = Math.floor(Math.random() * 6) + 1;
+                }
+            }
+            
+            gameState.rollsLeft--;
+            
+            // UI 업데이트
+            renderDice();
+            rollCountElement.textContent = `Rolls: ${3 - gameState.rollsLeft}/3`;
+            
+            // 컨트롤 상태 업데이트
+            updateControlsBasedOnTurn();
+            
+            // 상대방에게 주사위 상태 전송
+            sendGameData({
+                type: 'dice_roll',
+                dice: [...gameState.currentDice],
+                rollsLeft: gameState.rollsLeft,
+                player: gameState.playerId
+            });
+        }
+
+        function handleDiceRoll(data) {
+            if (data.player === gameState.playerId) return;
+            
+            gameState.currentDice = [...data.dice];
+            gameState.rollsLeft = data.rollsLeft;
+            
+            // UI 업데이트
+            renderDice();
+            rollCountElement.textContent = `Rolls: ${3 - gameState.rollsLeft}/3`;
+            
+            // 컨트롤 상태 업데이트
+            updateControlsBasedOnTurn();
+        }
+
+        function toggleHoldDice(index) {
+            // 자신의 턴이 아니거나, 아직 주사위를 굴리지 않았거나, 주사위를 모두 사용한 경우 무시
+            if (gameState.currentPlayer !== gameState.playerId || gameState.rollsLeft >= 3 || gameState.rollsLeft <= 0) {
+                return;
+            }
+            
+            gameState.heldDice[index] = !gameState.heldDice[index];
+            renderDice();
+            
+            // 상대방에게 홀드 상태 전송
+            sendGameData({
+                type: 'dice_hold',
+                index: index,
+                isHeld: gameState.heldDice[index],
+                player: gameState.playerId
+            });
+        }
+
+        function handleDiceHold(data) {
+            if (data.player === gameState.playerId) return;
+            
+            gameState.heldDice[data.index] = data.isHeld;
+            renderDice();
+        }
+
+        function showCategorySelection() {
+            if (gameState.currentPlayer !== gameState.playerId) {
+                return;
+            }            
+            // Clear previous options
+            categoryOptions.innerHTML = '';
+            
+            // Get available categories
+            const availableCategories = categories.filter(cat => 
+                !gameState.usedCategories[gameState.playerId].includes(cat.name)
+            );
+            
+            // Create buttons for each available category
+            availableCategories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = `${category.name} (${calculatePotentialScore(category.name)})`;
+                button.addEventListener('click', () => selectCategory(category.name));
+                button.style.margin = '0.5rem';
+                button.style.width = '100%';
+                categoryOptions.appendChild(button);
+            });
+            
+            // Show the modal
+            categoryModal.style.display = 'flex';
+        }
+
+        function hideCategorySelection() {
+            categoryModal.style.display = 'none';
+        }
+
+        function selectCategory(categoryName) {
+            // 자신의 턴이 아닌 경우 무시
+            if (gameState.currentPlayer !== gameState.playerId) {
+                return;
+            }
+            
+            const category = categories.find(cat => cat.name === categoryName);
+            if (!category) return;
+            
+            // 점수 계산
+            const score = category.calculate(gameState.currentDice);
+            
+            // 게임 상태 업데이트
+            gameState.scores[gameState.playerId][categoryName] = score;
+            gameState.usedCategories[gameState.playerId].push(categoryName);
+            
+            // 다음 턴으로 넘기기
+            const nextPlayer = gameState.playerId === 'player1' ? 'player2' : 'player1';
+            gameState.currentPlayer = nextPlayer;
+            
+            // 상태 초기화
+            resetForNextTurn();
+            
+            // UI 업데이트
+            renderScoreboard();
+            hideCategorySelection();
+            updateControlsBasedOnTurn();
+            
+            // 상대방에게 점수 선택 정보 전송
+            sendGameData({
+                type: 'score_selected',
+                category: categoryName,
+                score: score,
+                player: gameState.playerId,
+                nextPlayer: nextPlayer
+            });
+            
+            // 게임 종료 체크
+            checkGameOver();
+        }
+
+        function handleScoreSelected(data) {
+            gameState.scores[data.player][data.category] = data.score;
+            gameState.usedCategories[data.player].push(data.category);
+            gameState.currentPlayer = data.nextPlayer;
+            
+            // 주사위 및 롤 초기화
+            resetForNextTurn();
+            
+            // UI 업데이트
+            renderScoreboard();
+            updateControlsBasedOnTurn();
+            
+            // 게임 종료 체크
+            checkGameOver();
+        }
+
+        function resetForNextTurn() {
+            gameState.currentDice = [1, 1, 1, 1, 1];
+            gameState.heldDice = [false, false, false, false, false];
+            gameState.rollsLeft = 3;
+            
+            // Update UI
+            renderDice();
+            rollCountElement.textContent = `Rolls: 0/3`;
+            rollButton.disabled = false;
+            scoreButton.disabled = true;
+        }
+
+        function checkGameOver() {
+            if (gameState.usedCategories.player1.length === categories.length && 
+                gameState.usedCategories.player2.length === categories.length) {
+                // Game is over
+                const player1Total = calculateTotalScore('player1');
+                const player2Total = calculateTotalScore('player2');
+                
+                let resultMessage;
+                if (player1Total > player2Total) {
+                    resultMessage = `Player 1 wins ${player1Total} to ${player2Total}!`;
+                } else if (player2Total > player1Total) {
+                    resultMessage = `Player 2 wins ${player2Total} to ${player1Total}!`;
+                } else {
+                    resultMessage = `It's a tie! Both players scored ${player1Total} points.`;
+                }
+                
+                gameResultMessage.textContent = resultMessage;
+                gameOverModal.style.display = 'flex';
+                
+                // Send game over message
+                sendGameData({
+                    type: 'game_over',
+                    player1Total: player1Total,
+                    player2Total: player2Total,
+                    resultMessage: resultMessage
+                });
+            }
+        }
+
+        function handleGameOver(data) {
+            gameResultMessage.textContent = data.resultMessage;
+            gameOverModal.style.display = 'flex';
+        }
+
+        function resetGame() {
+            // Reset game state
+            gameState.currentDice = [1, 1, 1, 1, 1];
+            gameState.heldDice = [false, false, false, false, false];
+            gameState.rollsLeft = 3;
+            gameState.scores = { player1: {}, player2: {} };
+            gameState.usedCategories = { player1: [], player2: [] };
+            
+            // Host goes first
+            gameState.currentPlayer = 'player1';
+            
+            // Update UI
+            renderDice();
+            renderScoreboard();
+            rollCountElement.textContent = `Rolls: 0/3`;
+            rollButton.disabled = false;
+            scoreButton.disabled = true;
+            gameOverModal.style.display = 'none';
+            updateTurnIndicator();
+        }
+
+        function quitGame() {
+            // In a real app, you would close the connection
+            gameOverModal.style.display = 'none';
+            gameBoardElement.style.display = 'none';
+            lobbyElement.style.display = 'block';
+            
+            // Reset connection UI
+            connectionArea.style.display = 'none';
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.classList.remove('connected');
+            connectionStatus.classList.add('disconnected');
+            
+            createGameButton.disabled = false;
+            joinGameButton.disabled = false;
+        }
+
+        // Scoring functions
+        function sumDiceOfValue(dice, value) {
+            return dice.filter(d => d === value).reduce((sum, d) => sum + d, 0);
+        }
+
+        function checkFullHouse(dice) {
+            const counts = getCounts(dice);
+            const values = Object.values(counts);
+            return (values.includes(3) && values.includes(2)) ? dice.reduce((a, b) => a + b, 0) : 0;
+        }
+
+        function checkFourOfAKind(dice) {
+            const counts = getCounts(dice);
+            for (const [value, count] of Object.entries(counts)) {
+                if (count >= 4) {
+                    return value * 4;
+                }
+            }
+            return 0;
+        }
+
+        function checkLittleStraight(dice) {
+            const unique = [...new Set(dice)];
+            if (unique.length !== 5) return 0;
+            return unique.includes(1) && unique.includes(2) && unique.includes(3) && 
+                   unique.includes(4) && unique.includes(5) ? 30 : 0;
+        }
+
+        function checkBigStraight(dice) {
+            const unique = [...new Set(dice)];
+            if (unique.length !== 5) return 0;
+            return unique.includes(2) && unique.includes(3) && unique.includes(4) && 
+                   unique.includes(5) && unique.includes(6) ? 30 : 0;
+        }
+
+        function checkYacht(dice) {
+            return new Set(dice).size === 1 ? 50 : 0;
+        }
+
+        function getCounts(dice) {
+            const counts = {};
+            dice.forEach(d => {
+                counts[d] = (counts[d] || 0) + 1;
+            });
+            return counts;
+        }
+
+        function calculatePotentialScore(categoryName) {
+            const category = categories.find(cat => cat.name === categoryName);
+            return category ? category.calculate(gameState.currentDice) : 0;
+        }
+
+        function calculateTotalScore(player) {
+            return Object.values(gameState.scores[player]).reduce((sum, score) => sum + (score || 0), 0);
+        }
+
+        // UI rendering functions
+        function renderDice() {
+            diceContainer.innerHTML = '';
+            const isMyTurn = gameState.currentPlayer === gameState.playerId;
+            const canInteract = isMyTurn && gameState.rollsLeft < 3;
+            
+            gameState.currentDice.forEach((value, index) => {
+                const diceElement = document.createElement('div');
+                diceElement.className = `dice ${gameState.heldDice[index] ? 'held' : ''}`;
+                
+                // 상호작용 가능 여부에 따라 클래스 추가
+                if (!canInteract) {
+                    diceElement.classList.add('inactive');
+                    diceElement.style.cursor = 'default';
+                } else {
+                    diceElement.style.cursor = 'pointer';
+                }
+                
+                diceElement.addEventListener('click', () => toggleHoldDice(index));
+                
+                // 주사위 면 생성
+                const diceFace = document.createElement('div');
+                diceFace.className = 'dice-face';
+                
+                // 점 추가
+                for (let i = 0; i < value; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    diceFace.appendChild(dot);
+                }
+                
+                diceElement.appendChild(diceFace);
+                diceContainer.appendChild(diceElement);
+            });
+        }
+
+        function renderScoreboard() {
+            const tbody = scoreboardElement.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            // Add category rows
+            categories.forEach(category => {
+                const row = document.createElement('tr');
+                
+                // Category name with tooltip
+                const categoryCell = document.createElement('td');
+                categoryCell.className = 'score-category';
+                categoryCell.textContent = category.name;
+                categoryCell.dataset.tooltip = category.description;
+                row.appendChild(categoryCell);
+                
+                // Player 1 score
+                const player1Cell = document.createElement('td');
+                player1Cell.textContent = gameState.scores.player1[category.name] !== null ? 
+                    gameState.scores.player1[category.name] : '';
+                row.appendChild(player1Cell);
+                
+                // Player 2 score
+                const player2Cell = document.createElement('td');
+                player2Cell.textContent = gameState.scores.player2[category.name] !== null ? 
+                    gameState.scores.player2[category.name] : '';
+                row.appendChild(player2Cell);
+                
+                // Highlight current player's turn
+                if (gameState.currentPlayer === 'player1' && !gameState.scores.player1[category.name] && 
+                    gameState.playerId === 'player1') {
+                    row.classList.add('player-turn');
+                } else if (gameState.currentPlayer === 'player2' && !gameState.scores.player2[category.name] && 
+                           gameState.playerId === 'player2') {
+                    row.classList.add('player-turn');
+                }
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add total row
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            
+            const totalLabelCell = document.createElement('td');
+            totalLabelCell.textContent = 'Total';
+            totalRow.appendChild(totalLabelCell);
+            
+            const player1TotalCell = document.createElement('td');
+            player1TotalCell.textContent = calculateTotalScore('player1');
+            totalRow.appendChild(player1TotalCell);
+            
+            const player2TotalCell = document.createElement('td');
+            player2TotalCell.textContent = calculateTotalScore('player2');
+            totalRow.appendChild(player2TotalCell);
+            
+            tbody.appendChild(totalRow);
+        }
+
+        function updatePlayerHeaders() {
+            player1Header.textContent = gameState.isHost ? gameState.playerName : 'Player 1';
+            player2Header.textContent = gameState.isHost ? 'Player 2' : gameState.playerName;
+        }
+
+        function updateTurnIndicator() {
+            updateControlsBasedOnTurn();
+        }
+
+        function updateControlsBasedOnTurn() {
+            const isMyTurn = gameState.currentPlayer === gameState.playerId;
+            
+            // 주사위 버튼 제어
+            rollButton.disabled = !isMyTurn || gameState.rollsLeft <= 0;
+            
+            // 점수 버튼 제어 (자신의 턴이고 최소 1번 굴렸을 때만 활성화)
+            scoreButton.disabled = !isMyTurn || gameState.rollsLeft === 3;
+            
+            // 주사위 상호작용 제어
+            const diceElements = diceContainer.querySelectorAll('.dice');
+            diceElements.forEach(dice => {
+                if (isMyTurn && gameState.rollsLeft < 3) {
+                    dice.classList.remove('inactive');
+                    dice.style.cursor = 'pointer';
+                } else {
+                    dice.classList.add('inactive');
+                    dice.style.cursor = 'default';
+                }
+            });
+            
+            // 턴 표시기 업데이트
+            if (isMyTurn) {
+                turnIndicator.textContent = '당신의 턴';
+                turnIndicator.style.backgroundColor = 'var(--success)';
+            } else {
+                turnIndicator.textContent = '상대방 턴';
+                turnIndicator.style.backgroundColor = 'var(--warning)';
+            }
+        }
+
+        // Chat functions
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add to local chat
+            addChatMessage(gameState.playerName, message);
+            
+            // Send to other player
+            sendGameData({
+                type: 'chat_message',
+                sender: gameState.playerName,
+                message: message
+            });
+            
+            // Clear input
+            chatInput.value = '';
+        }
+
+        function handleChatMessage(data) {
+            addChatMessage(data.sender, data.message);
+        }
+
+        function addChatMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
