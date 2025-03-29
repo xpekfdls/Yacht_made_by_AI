@@ -1,252 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yacht Dice - P2P Multiplayer</title>
+  <title>Yacht Dice Game</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-  <!-- Welcome / Connection Screen -->
-  <div id="welcome-screen" class="screen active">
-    <div class="container">
-      <h1>🎲 Yacht Dice 🎲</h1>
-      <p class="subtitle">1938 Original Rules - P2P Multiplayer</p>
-      
-      <div class="menu-options">
-        <button id="create-game-btn" class="btn primary-btn">Create New Game</button>
-        <div class="separator">OR</div>
-        <div class="join-game-container">
-          <input type="text" id="room-code-input" placeholder="Enter Room Code" maxlength="6">
-          <button id="join-game-btn" class="btn secondary-btn">Join Game</button>
-        </div>
-      </div>
-      
-      <div id="connection-status" class="status-message"></div>
-      
-      <div id="share-code-container" class="share-code-container hidden">
-        <p>Share this code with your friend:</p>
-        <div class="room-code-display">
-          <span id="room-code-display"></span>
-          <button id="copy-code-btn" class="btn icon-btn"><i class="fas fa-copy"></i></button>
-        </div>
-        <p>Waiting for opponent to join...</p>
+  <div class="container">
+    <h1>Yacht Dice Game</h1>
+    
+    <!-- 초기 메뉴 화면 -->
+    <div id="menu-screen">
+      <h2>게임 모드 선택</h2>
+      <div class="button-container">
+        <button id="solo-mode-btn" class="btn primary-btn">혼자 플레이</button>
+        <button id="create-room-btn" class="btn primary-btn">방 만들기</button>
+        <button id="join-room-btn" class="btn primary-btn">방 참가하기</button>
       </div>
     </div>
     
-    <div class="rules-container">
-      <h3>Game Rules</h3>
-      <div class="rules-content">
-        <p><strong>Yacht Dice</strong> is played with five dice over 12 rounds.</p>
-        <p>On each turn:</p>
-        <ul>
-          <li>Roll up to 3 times</li>
-          <li>After each roll, you may hold any dice</li>
-          <li>After your rolls, choose a scoring category</li>
-          <li>Each category can only be used once</li>
-        </ul>
-        <p><strong>Scoring Categories:</strong></p>
-        <ul>
-          <li><strong>Ones-Sixes:</strong> Sum of that number</li>
-          <li><strong>Full House:</strong> Three of one number and two of another (sum all dice)</li>
-          <li><strong>Four of a Kind:</strong> Sum of four matching dice</li>
-          <li><strong>Little Straight:</strong> 1-2-3-4-5 (30 points)</li>
-          <li><strong>Big Straight:</strong> 2-3-4-5-6 (30 points)</li>
-          <li><strong>Choice:</strong> Sum of all dice</li>
-          <li><strong>Yacht:</strong> Five of a kind (50 points)</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Game Screen -->
-  <div id="game-screen" class="screen">
-    <div class="game-header">
-      <h2>Yacht Dice</h2>
-      <div id="room-info">Room: <span id="current-room-code"></span></div>
-      <div id="turn-indicator" class="turn-indicator">
-        <span class="player-name">Your Turn</span>
-      </div>
-    </div>
-    
-    <div class="game-container">
-      <div class="players-container">
-        <div id="player1" class="player player-active">
-          <div class="player-name">You</div>
-          <div class="player-total">Total: <span class="total-score">0</span></div>
-        </div>
-        <div id="player2" class="player">
-          <div class="player-name">Opponent</div>
-          <div class="player-total">Total: <span class="total-score">0</span></div>
-        </div>
+    <!-- 방 생성 화면 -->
+    <div id="create-room-screen" class="hidden">
+      <h2>방 생성하기</h2>
+      <div class="form-group">
+        <label for="create-name">닉네임:</label>
+        <input type="text" id="create-name" placeholder="닉네임을 입력하세요">
       </div>
       
-      <div class="dice-section">
-        <div class="dice-container">
-          <div class="die" data-index="0">
-            <div class="die-face">
-              <div class="die-dot"></div>
-            </div>
-          </div>
-          <div class="die" data-index="1">
-            <div class="die-face">
-              <div class="die-dot"></div>
-            </div>
-          </div>
-          <div class="die" data-index="2">
-            <div class="die-face">
-              <div class="die-dot"></div>
-            </div>
-          </div>
-          <div class="die" data-index="3">
-            <div class="die-face">
-              <div class="die-dot"></div>
-            </div>
-          </div>
-          <div class="die" data-index="4">
-            <div class="die-face">
-              <div class="die-dot"></div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="controls">
-          <div class="roll-info">
-            <span id="rolls-left">Rolls left: 3</span>
-          </div>
-          <button id="roll-btn" class="btn primary-btn">Roll Dice</button>
-        </div>
+      <div class="game-actions">
+        <button id="roll-dice-btn" class="btn primary-btn">주사위 굴리기</button>
       </div>
       
+      <!-- 점수판 영역 -->
       <div class="scorecard-container">
+        <h3>점수표</h3>
+        <div id="pvp-score-tabs" class="score-tabs hidden">
+          <button class="score-tab active" data-player="player1">플레이어 1</button>
+          <button class="score-tab" data-player="player2">플레이어 2</button>
+        </div>
         <table class="scorecard">
           <thead>
             <tr>
-              <th>Category</th>
-              <th>You</th>
-              <th>Opponent</th>
+              <th>카테고리</th>
+              <th>설명</th>
+              <th id="scorecard-player">점수</th>
             </tr>
           </thead>
           <tbody>
-            <tr data-category="ones">
-              <td data-tooltip="Sum of all ones">Ones</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <!-- 상단 섹션 -->
+            <tr class="category" data-category="ones">
+              <td>Ones</td>
+              <td>1의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="twos">
-              <td data-tooltip="Sum of all twos">Twos</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="twos">
+              <td>Twos</td>
+              <td>2의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="threes">
-              <td data-tooltip="Sum of all threes">Threes</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="threes">
+              <td>Threes</td>
+              <td>3의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="fours">
-              <td data-tooltip="Sum of all fours">Fours</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="fours">
+              <td>Fours</td>
+              <td>4의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="fives">
-              <td data-tooltip="Sum of all fives">Fives</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="fives">
+              <td>Fives</td>
+              <td>5의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="sixes">
-              <td data-tooltip="Sum of all sixes">Sixes</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="sixes">
+              <td>Sixes</td>
+              <td>6의 합계</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="fullHouse">
-              <td data-tooltip="Three of one number and two of another. Score: sum of all dice">Full House</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="subtotal-row">
+              <td>상단 합계</td>
+              <td></td>
+              <td id="upper-score">0</td>
             </tr>
-            <tr data-category="fourOfAKind">
-              <td data-tooltip="Four dice showing the same number. Score: sum of those four dice">Four of a Kind</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="bonus-row">
+              <td>보너스</td>
+              <td>63점 이상 시 +35</td>
+              <td id="bonus-score">0</td>
             </tr>
-            <tr data-category="littleStraight">
-              <td data-tooltip="The sequence 1-2-3-4-5. Score: 30 points">Little Straight</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            
+            <!-- 하단 섹션 -->
+            <tr class="category" data-category="choice">
+              <td>Choice</td>
+              <td>모든 주사위의 합</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="bigStraight">
-              <td data-tooltip="The sequence 2-3-4-5-6. Score: 30 points">Big Straight</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="fourOfKind">
+              <td>Four of a Kind</td>
+              <td>같은 숫자 4개 이상</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="choice">
-              <td data-tooltip="Any combination. Score: sum of all dice">Choice</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="fullHouse">
+              <td>Full House</td>
+              <td>같은 숫자 3개 + 2개</td>
+              <td class="score-cell">-</td>
             </tr>
-            <tr data-category="yacht">
-              <td data-tooltip="Five dice showing the same number. Score: 50 points">Yacht</td>
-              <td class="score-cell player1"></td>
-              <td class="score-cell player2"></td>
+            <tr class="category" data-category="smallStraight">
+              <td>Small Straight</td>
+              <td>연속 4개 (15점)</td>
+              <td class="score-cell">-</td>
+            </tr>
+            <tr class="category" data-category="largeStraight">
+              <td>Large Straight</td>
+              <td>연속 5개 (30점)</td>
+              <td class="score-cell">-</td>
+            </tr>
+            <tr class="category" data-category="yacht">
+              <td>Yacht</td>
+              <td>같은 숫자 5개 (50점)</td>
+              <td class="score-cell">-</td>
+            </tr>
+            <tr class="total-row">
+              <td>총점</td>
+              <td></td>
+              <td id="total-score">0</td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr>
-              <th>Total</th>
-              <th id="player1-total">0</th>
-              <th id="player2-total">0</th>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>
     
-    <!-- Optional: Chat feature -->
-    <div class="chat-container">
-      <div class="chat-messages" id="chat-messages"></div>
-      <div class="chat-input-container">
-        <input type="text" id="chat-input" placeholder="Type a message...">
-        <button id="send-message-btn" class="btn icon-btn"><i class="fas fa-paper-plane"></i></button>
-      </div>
+    <!-- 게임 결과 화면 -->
+    <div id="game-result-screen" class="hidden">
+      <h2>게임 종료!</h2>
+      <div id="winner-display"></div>
+      <div id="final-scores"></div>
+      <button id="back-to-menu" class="btn primary-btn">메인 메뉴로</button>
     </div>
+    
+    <!-- 알림창 -->
+    <div id="notification" class="hidden"></div>
   </div>
-  
-  <!-- Game Over Screen -->
-  <div id="game-over-screen" class="screen">
-    <div class="container">
-      <h2>Game Over</h2>
-      <div id="winner-display" class="winner-display">
-        <span id="winner-text"></span>
-      </div>
-      <div class="final-scores">
-        <div class="final-score">
-          <span>Your Score:</span>
-          <span id="final-score-player1">0</span>
-        </div>
-        <div class="final-score">
-          <span>Opponent's Score:</span>
-          <span id="final-score-player2">0</span>
-        </div>
-      </div>
-      <button id="play-again-btn" class="btn primary-btn">Play Again</button>
-      <button id="new-game-btn" class="btn secondary-btn">New Game</button>
-    </div>
-  </div>
-  
-  <!-- Connection lost overlay -->
-  <div id="connection-lost" class="overlay hidden">
-    <div class="overlay-content">
-      <h3>Connection Lost</h3>
-      <p>Waiting for your opponent to reconnect...</p>
-      <div class="loader"></div>
-      <button id="exit-game-btn" class="btn secondary-btn">Exit Game</button>
-    </div>
-  </div>
-  
+
+  <!-- 스크립트 -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/webrtc.js"></script>
-  <script src="js/game.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/app.js"></script>
+  <script src="socket-client.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
+      <div class="button-container">
+        <button id="create-room-submit" class="btn primary-btn">방 만들기</button>
+        <button id="create-room-back" class="btn secondary-btn">뒤로가기</button>
+      </div>
+    </div>
+    
+    <!-- 방 참가 화면 -->
+    <div id="join-room-screen" class="hidden">
+      <h2>방 참가하기</h2>
+      <div class="form-group">
+        <label for="join-code">방 코드:</label>
+        <input type="text" id="join-code" placeholder="방 코드를 입력하세요">
+      </div>
+      <div class="form-group">
+        <label for="join-name">닉네임:</label>
+        <input type="text" id="join-name" placeholder="닉네임을 입력하세요">
+      </div>
+      <div class="button-container">
+        <button id="join-room-submit" class="btn primary-btn">참가하기</button>
+        <button id="join-room-back" class="btn secondary-btn">뒤로가기</button>
+      </div>
+    </div>
+    
+    <!-- 대기실 화면 -->
+    <div id="waiting-room-screen" class="hidden">
+      <h2>대기실</h2>
+      <div class="room-info">
+        <p>방 코드: <span id="room-code-display"></span></p>
+        <p>이 코드를 친구에게 공유하세요!</p>
+      </div>
+      <div class="players-list">
+        <h3>참가자</h3>
+        <ul id="players-list"></ul>
+      </div>
+      <p id="waiting-message">상대방이 들어오기를 기다리는 중...</p>
+    </div>
+    
+    <!-- 게임 화면 (Solo & PvP 공통) -->
+    <div id="game-screen" class="hidden">
+      <div class="game-header">
+        <div class="game-info">
+          <h2 id="game-mode-title">Yacht Dice Game</h2>
+          <p id="turn-info" class="hidden">현재 턴: <span id="current-player"></span></p>
+          <p id="roll-info">남은 굴림: <span id="rolls-left">3</span></p>
+        </div>
+        <div id="room-info" class="hidden">
+          <p>방 코드: <span id="game-room-code"></span></p>
+        </div>
+      </div>
+      
+      <!-- 주사위 영역 -->
+      <div class="dice-container">
+        <div class="dice" data-index="0">
+          <div class="dice-face">1</div>
+        </div>
+        <div class="dice" data-index="1">
+          <div class="dice-face">1</div>
+        </div>
+        <div class="dice" data-index="2">
+          <div class="dice-face">1</div>
+        </div>
+        <div class="dice" data-index="3">
+          <div class="dice-face">1</div>
+        </div>
+        <div class="dice" data-index="4">
+          <div class="dice-face">1</div>
+        </div>
+      </div>
+      

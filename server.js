@@ -1,126 +1,173 @@
+// Express 서버 설정
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
-const { v4: uuidv4 } = require('uuid');
+const socketIO = require('socket.io');
 const path = require('path');
 
-// Initialize Express app
+// 게임 로직 모듈 불러오기
+const RoomManager = require('./src/room');
+
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIO(server);
 
-// Serve static files
+// 정적 파일 제공
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Store active room data
-const rooms = {};
+// 방 관리자 인스턴스 생성
+const roomManager = new RoomManager();
 
-// Socket.io connection handling
+// 소켓 연결 처리
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('New client connected:', socket.id);
   
-  // Create a new game room
-  socket.on('create-room', () => {
-    const roomId = uuidv4().substring(0, 6).toUpperCase(); // Generate short room code
-    rooms[roomId] = {
-      creator: socket.id,
-      peers: [socket.id],
-      full: false
-    };
-    
-    socket.join(roomId);
-    socket.emit('room-created', { roomId });
-    console.log(`Room created: ${roomId} by ${socket.id}`);
+  // 솔로 게임 시작
+  socket.on('start-solo', () => {
+    console.log(`User ${socket.id} started a solo game`);
+    // 솔로 게임은 서버에서 특별한 처리가 필요 없음 (클라이언트에서 처리)
+    socket.emit('solo-started');
   });
-  
-  // Join an existing room
-  socket.on('join-room', ({ roomId }) => {
-    const room = rooms[roomId];
+
+  // 방 생성
+  socket.on('create-room', (playerName) => {
+    const roomCode = roomManager.createRoom(socket.id, playerName);
+    console.log(`User ${socket.id} (${playerName}) created room: ${roomCode}`);
     
-    if (!room) {
-      socket.emit('error', { message: 'Room not found' });
-      return;
-    }
-    
-    if (room.peers.length >= 2) {
-      socket.emit('error', { message: 'Room is full' });
-      return;
-    }
-    
-    // Join the room
-    socket.join(roomId);
-    room.peers.push(socket.id);
-    room.full = room.peers.length >= 2;
-    
-    // Notify the room creator
-    socket.to(room.creator).emit('peer-joined', { peerId: socket.id });
-    socket.emit('room-joined', { 
-      roomId, 
-      isCreator: false, 
-      creatorId: room.creator 
-    });
-    
-    console.log(`User ${socket.id} joined room ${roomId}`);
+    socket.join(roomCode);
+    socket.emit('room-created', { roomCode, playerId: socket.id });
   });
-  
-  // WebRTC signaling
-  socket.on('offer', ({ offer, to }) => {
-    console.log(`Relaying offer from ${socket.id} to ${to}`);
-    socket.to(to).emit('offer', {
-      offer,
-      from: socket.id
-    });
-  });
-  
-  socket.on('answer', ({ answer, to }) => {
-    console.log(`Relaying answer from ${socket.id} to ${to}`);
-    socket.to(to).emit('answer', {
-      answer,
-      from: socket.id
-    });
-  });
-  
-  socket.on('ice-candidate', ({ candidate, to }) => {
-    console.log(`Relaying ICE candidate from ${socket.id} to ${to}`);
-    socket.to(to).emit('ice-candidate', {
-      candidate,
-      from: socket.id
-    });
-  });
-  
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+
+  // 방 참가
+  socket.on('join-room', ({ roomCode, playerName }) => {
+    const joinResult = roomManager.joinRoom(roomCode, socket.id, playerName);
     
-    // Find and clean up rooms
-    for (const roomId in rooms) {
-      const room = rooms[roomId];
+    if (joinResult.success) {
+      socket.join(roomCode);
+      console.log(`User ${socket.id} (${playerName}) joined room: ${roomCode}`);
       
-      // Remove user from peers
-      const index = room.peers.indexOf(socket.id);
-      if (index !== -1) {
-        room.peers.splice(index, 1);
-        room.full = room.peers.length >= 2;
+      // 방 정보 전송
+      socket.emit('room-joined', { 
+        roomCode, 
+        playerId: socket.id,
+        players: joinResult.players,
+        currentTurn: joinResult.currentTurn
+      });
+      
+      // 다른 플레이어에게 새 플레이어 참가 알림
+      socket.to(roomCode).emit('player-joined', {
+        playerId: socket.id,
+        playerName: playerName,
+        players: joinResult.players,
+        currentTurn: joinResult.currentTurn
+      });
+      
+      // 게임이 시작 가능한 상태라면 게임 시작
+      if (joinResult.gameReady) {
+        io.to(roomCode).emit('game-started', {
+          players: joinResult.players,
+          currentTurn: joinResult.currentTurn
+        });
+      }
+    } else {
+      socket.emit('join-error', { error: joinResult.error });
+    }
+  });
+
+  // 주사위 굴리기
+  socket.on('roll-dice', ({ roomCode, rollCount }) => {
+    const room = roomManager.getRoom(roomCode);
+    
+    if (room && room.currentTurn === socket.id) {
+      const diceResult = roomManager.rollDice(roomCode);
+      
+      // 모든 플레이어에게 주사위 결과 전송
+      io.to(roomCode).emit('dice-rolled', {
+        dice: diceResult,
+        rollCount: rollCount,
+        playerId: socket.id
+      });
+    }
+  });
+
+  // 주사위 고정
+  socket.on('toggle-hold', ({ roomCode, diceIndex }) => {
+    const room = roomManager.getRoom(roomCode);
+    
+    if (room && room.currentTurn === socket.id) {
+      roomManager.toggleHold(roomCode, diceIndex);
+      
+      // 모든 플레이어에게 고정 상태 변경 알림
+      io.to(roomCode).emit('hold-toggled', {
+        diceIndex: diceIndex,
+        playerId: socket.id,
+        holds: room.diceHolds
+      });
+    }
+  });
+
+  // 점수 선택
+  socket.on('select-score', ({ roomCode, category }) => {
+    const room = roomManager.getRoom(roomCode);
+    
+    if (room && room.currentTurn === socket.id) {
+      const result = roomManager.selectScore(roomCode, socket.id, category);
+      
+      if (result.success) {
+        // 점수 업데이트 및 턴 변경
+        io.to(roomCode).emit('score-selected', {
+          playerId: socket.id,
+          category: category,
+          score: result.score,
+          scoreCard: result.scoreCard,
+          nextTurn: result.nextTurn
+        });
         
-        // Notify remaining peer about disconnection
-        if (room.peers.length > 0) {
-          io.to(roomId).emit('peer-disconnected', { peerId: socket.id });
-        }
-        
-        console.log(`User ${socket.id} removed from room ${roomId}`);
-        
-        // Delete empty rooms
-        if (room.peers.length === 0) {
-          delete rooms[roomId];
-          console.log(`Empty room deleted: ${roomId}`);
+        // 게임 종료 체크
+        if (result.gameOver) {
+          io.to(roomCode).emit('game-over', {
+            winner: result.winner,
+            scores: result.finalScores
+          });
         }
       }
     }
   });
+
+  // 연결 해제
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+    
+    // 유저가 속한 방에서 제거
+    const rooms = roomManager.getRoomsByPlayerId(socket.id);
+    
+    rooms.forEach(roomCode => {
+      const result = roomManager.removePlayer(roomCode, socket.id);
+      
+      if (result.roomRemoved) {
+        // 방이 완전히 삭제된 경우
+        console.log(`Room ${roomCode} removed as all players left`);
+      } else if (result.success) {
+        // 다른 플레이어에게 퇴장 알림
+        socket.to(roomCode).emit('player-left', {
+          playerId: socket.id,
+          players: result.players,
+          currentTurn: result.currentTurn,
+          gameOver: result.gameOver
+        });
+        
+        if (result.gameOver) {
+          socket.to(roomCode).emit('game-over', {
+            winner: result.winner,
+            reason: 'opponent-left'
+          });
+        }
+      }
+    });
+  });
 });
 
-// Start server
+// 서버 시작
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
