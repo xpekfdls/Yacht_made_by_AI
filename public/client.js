@@ -6,19 +6,47 @@ let myTurn = false;
 let myDice = [];
 let usedCategories = {};
 
-function startSolo() { ... }
-function showPVPMenu() { ... }
-function createRoom() { ... }
+function startSolo() {
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("status").innerText = "Playing in Solo Mode (WIP)";
+}
+
+function showPVPMenu() {
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("pvpMenu").classList.remove("hidden");
+}
+
+function createRoom() {
+  socket.emit("createRoom");
+}
+
+function joinRoom() {
+  const code = document.getElementById("roomCodeInput").value.toUpperCase();
+  socket.emit("joinRoom", code);
+}
 
 socket.on("connect", () => { myId = socket.id; });
 
-socket.on("roomCreated", (roomCode) => { ... });
-function joinRoom() { ... }
-socket.on("roomJoined", (roomCode) => { ... });
+socket.on("roomCreated", (roomCode) => {
+  currentRoom = roomCode;
+  document.getElementById("pvpMenu").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("roomCodeDisplay").innerText = `Room Code: ${roomCode}`;
+  document.getElementById("status").innerText = `Waiting for opponent...`;
+});
+
+socket.on("roomJoined", (roomCode) => {
+  currentRoom = roomCode;
+  document.getElementById("pvpMenu").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("status").innerText = `Connected to room: ${roomCode}`;
+});
 
 socket.on("startGame", (ids) => {
   players = ids;
   myTurn = (players[0] === myId);
+  usedCategories = {};
   updateTurnUI();
   renderScoreBoard();
   updateScoreTable({});
@@ -49,7 +77,6 @@ function calculateScore(category, dice) {
   const counts = [0, 0, 0, 0, 0, 0];
   dice.forEach(d => counts[d - 1]++);
   const sum = dice.reduce((a, b) => a + b, 0);
-
   switch (category) {
     case "Ones": return counts[0] * 1;
     case "Twos": return counts[1] * 2;
@@ -67,10 +94,10 @@ function calculateScore(category, dice) {
       return i >= 0 ? (i + 1) * 4 : 0;
     }
     case "Little Straight": {
-      return [1, 1, 1, 1, 1].every((_, i) => counts[i] >= 1) ? 30 : 0;
+      return [1,1,1,1,1].every((_, i) => counts[i] >= 1) ? 30 : 0;
     }
     case "Big Straight": {
-      return [1, 1, 1, 1, 1].every((_, i) => counts[i + 1] >= 1) ? 30 : 0;
+      return [1,1,1,1,1].every((_, i) => counts[i+1] >= 1) ? 30 : 0;
     }
     case "Choice": return sum;
     case "Yacht": return counts.includes(5) ? 50 : 0;
@@ -133,7 +160,6 @@ function updateScoreTable(scores) {
 
   table.appendChild(thead);
   table.appendChild(tbody);
-
   const container = document.getElementById("scoreBoard");
   container.appendChild(table);
 }
